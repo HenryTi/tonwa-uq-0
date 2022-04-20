@@ -8,7 +8,7 @@ import { MessageHub } from "./messageHub";
 import { WsBridge, WSChannel } from "./wsChannel";
 import { buildDebugHosts, buildHosts, Hosts } from './host';
 import { LocalDb } from "../tool";
-import { env } from "tonwa-com";
+//import { env } from "tonwa-com";
 
 export interface PromiseValue<T> {
     resolve: (value?: T | PromiseLike<T>) => void;
@@ -63,7 +63,7 @@ export class Net {
     constructor(props: NetProps) {
         this.props = props;
         this.isDevelopment = process.env.NODE_ENV === 'development';
-        this.testing = env.testing;
+        this.testing = props.testing;
         this.localDb = this.props.localDb;
         this.createObservableMap = this.props.createObservableMap;
         this.centerApi = new CenterApi(this, 'tv/');
