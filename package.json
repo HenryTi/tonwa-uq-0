@@ -1,6 +1,6 @@
 {
     "name": "tonwa-uq",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "uq client",
     "private": false,
     "main": "dist/index.js",
