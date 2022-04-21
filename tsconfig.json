@@ -29,7 +29,7 @@
         "experimentalDecorators": true,
         "baseUrl": "tonwa-uq/",
         "typeRoots": [
-            "node_modules/@types",
+            "node_modules/@types"
         ]
     },
     "exclude": [
