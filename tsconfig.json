@@ -27,10 +27,7 @@
         "jsx": "react-jsx",
         "strictNullChecks": false,
         "experimentalDecorators": true,
-        "baseUrl": "tonwa-uq/",
-        "typeRoots": [
-            "node_modules/@types"
-        ]
+        "baseUrl": "tonwa-uq/"
     },
     "exclude": [
         "node_modules",
