@@ -102,8 +102,18 @@ export async function buildDebugHosts(center: string, debugHosts: Hosts): Promis
     let promises: PromiseLike<any>[] = [debugCenter, uq, res].map(v => localCheck(v));
     let results = await Promise.all(promises);
     if (results[0] === true) center = `http://${debugCenter}/`;
-    if (results[1] === true) uq = `http://${uq}/`;
-    if (results[2] === true) res = `http://${res}/`;
+    if (results[1] === true) {
+        uq = `http://${uq}/`;
+    }
+    else {
+        uq = undefined;
+    }
+    if (results[2] === true) {
+        res = `http://${res}/`;
+    }
+    else {
+        res = undefined;
+    }
     return { center, uq, res };
 }
 

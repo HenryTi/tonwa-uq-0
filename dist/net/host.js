@@ -137,10 +137,18 @@ function buildDebugHosts(center, debugHosts) {
                     results = _a.sent();
                     if (results[0] === true)
                         center = "http://".concat(debugCenter, "/");
-                    if (results[1] === true)
+                    if (results[1] === true) {
                         uq = "http://".concat(uq, "/");
-                    if (results[2] === true)
+                    }
+                    else {
+                        uq = undefined;
+                    }
+                    if (results[2] === true) {
                         res = "http://".concat(res, "/");
+                    }
+                    else {
+                        res = undefined;
+                    }
                     return [2 /*return*/, { center: center, uq: uq, res: res }];
             }
         });
