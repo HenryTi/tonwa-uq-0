@@ -162,7 +162,12 @@ var LocalArr = /** @class */ (function (_super) {
     function LocalArr(localDb, name) {
         var _this = _super.call(this, localDb, name) || this;
         var index = _this.localDb.getItem(_this.name);
-        _this.index = index === null ? [] : index.split('\n').map(function (v) { return Number(v); });
+        if (index) {
+            _this.index = index.split('\n').map(function (v) { return Number(v); });
+        }
+        else {
+            _this.index = [];
+        }
         return _this;
     }
     LocalArr.prototype.saveIndex = function () {
@@ -217,7 +222,7 @@ var LocalMap = /** @class */ (function (_super) {
         _this.max = 0;
         _this.index = {};
         var index = _this.localDb.getItem(_this.name);
-        if (index !== null) {
+        if (index) {
             var ls = index.split('\n');
             ls.forEach(function (l) {
                 var p = l.indexOf('\t');

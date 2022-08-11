@@ -56,11 +56,12 @@ var uqsMan_1 = require("./uqsMan");
 var net_1 = require("../net");
 var uqDataLocalStore = 'uq-data-local-storage';
 var UQsLoader = /** @class */ (function () {
-    function UQsLoader(net, uqConfigVersion, uqConfigs) {
+    function UQsLoader(net, uqConfigVersion, uqConfigs, uqsSchema) {
         this.isBuildingUQ = false;
         this.net = net;
         this.uqConfigVersion = uqConfigVersion;
         this.uqConfigs = uqConfigs;
+        this.uqsSchema = uqsSchema;
     }
     UQsLoader.prototype.build = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -79,7 +80,7 @@ var UQsLoader = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        this.uqsMan = new uqsMan_1.UQsMan(this.net);
+                        this.uqsMan = new uqsMan_1.UQsMan(this.net, this.uqsSchema);
                         return [4 /*yield*/, this.loadUqData(this.uqConfigs)];
                     case 1:
                         uqs = _a.sent();
@@ -91,7 +92,7 @@ var UQsLoader = /** @class */ (function () {
     };
     UQsLoader.prototype.loadUqData = function (uqConfigs) {
         return __awaiter(this, void 0, void 0, function () {
-            var uqs, ret, centerAppApi, _a, err, i, _b, ownerAlias, alias;
+            var uqs, ret, centerAppApi, _a, e_1, err, i, _b, ownerAlias, alias;
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
@@ -101,25 +102,35 @@ var UQsLoader = /** @class */ (function () {
                             return { owner: owner, ownerAlias: ownerAlias, name: name, version: version, alias: alias };
                         });
                         ret = this.loadLocal(uqs);
-                        if (!!ret) return [3 /*break*/, 4];
+                        if (!!ret) return [3 /*break*/, 7];
                         centerAppApi = new net_1.CenterAppApi(this.net, 'tv/');
-                        if (!(uqs.length === 0)) return [3 /*break*/, 1];
+                        _c.label = 1;
+                    case 1:
+                        _c.trys.push([1, 5, , 6]);
+                        if (!(uqs.length === 0)) return [3 /*break*/, 2];
                         _a = [];
-                        return [3 /*break*/, 3];
-                    case 1: return [4 /*yield*/, centerAppApi.uqs(uqs)];
-                    case 2:
-                        _a = _c.sent();
-                        _c.label = 3;
+                        return [3 /*break*/, 4];
+                    case 2: return [4 /*yield*/, centerAppApi.uqs(uqs)];
                     case 3:
+                        _a = _c.sent();
+                        _c.label = 4;
+                    case 4:
                         ret = _a;
+                        return [3 /*break*/, 6];
+                    case 5:
+                        e_1 = _c.sent();
+                        debugger;
+                        return [3 /*break*/, 6];
+                    case 6:
                         if (ret.length < uqs.length) {
                             err = "\u4E0B\u5217UQ\uFF1A\n".concat(uqs.map(function (v) { return "".concat(v.owner, "/").concat(v.name); }).join('\n'), "\u4E4B\u4E00\u4E0D\u5B58\u5728");
                             console.error(err);
                             throw Error(err);
                         }
-                        localStorage.setItem(uqDataLocalStore, JSON.stringify(ret));
-                        _c.label = 4;
-                    case 4:
+                        //localStorage
+                        this.net.localDb.setItem(uqDataLocalStore, JSON.stringify(ret));
+                        _c.label = 7;
+                    case 7:
                         for (i = 0; i < uqs.length; i++) {
                             _b = uqs[i], ownerAlias = _b.ownerAlias, alias = _b.alias;
                             ret[i].ownerAlias = ownerAlias;
@@ -131,7 +142,8 @@ var UQsLoader = /** @class */ (function () {
         });
     };
     UQsLoader.prototype.loadLocal = function (uqs) {
-        var local = localStorage.getItem(uqDataLocalStore);
+        // localStorage
+        var local = this.net.localDb.getItem(uqDataLocalStore);
         if (!local)
             return;
         try {

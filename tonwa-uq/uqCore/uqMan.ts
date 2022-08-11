@@ -13,6 +13,7 @@ import { UqEnum } from './enum';
 import { Entity } from './entity';
 import { ID, IX, IDX } from './ID';
 import { Net } from '../net';
+import { UqSys } from './uqSys';
 
 export type FieldType = 'id' | 'tinyint' | 'smallint' | 'int' | 'bigint' | 'dec' | 'float' | 'double' | 'char' | 'text'
     | 'datetime' | 'date' | 'time' | 'timestamp' | 'enum';
@@ -84,6 +85,13 @@ export interface ParamActIXSort {
     ix: number;
     id: number;					// id to be moved
     after: number;				// insert after id. if before first, then 0
+}
+
+export interface ParamActID {
+    ID: ID;
+    value: object;
+    IX?: IX[];
+    ix?: (number | object)[];
 }
 
 export interface ParamActDetail<M, D> {
@@ -243,16 +251,14 @@ enum EnumResultType { data, sql };
 export interface Uq {
     $: Uq;
     $name: string;
-    AdminGetList(): Promise<any[]>;
-    AdminSetMe(): Promise<void>;
-    AdminSet(user: number, role: number, assigned: string): Promise<void>;
-    AdminIsMe(): Promise<boolean>;
-
+    sys: UqSys;
+    idObj<T = any>(id: number): Promise<T>;
     IDValue(type: string, value: string): object;
     Acts(param: any): Promise<any>;
     ActIX<T>(param: ParamActIX<T>): Promise<number[]>;
     ActIXSort(param: ParamActIXSort): Promise<void>;
     ActIDProp(ID: ID, id: number, name: string, value: any): Promise<void>;
+    ActID(param: ParamActID): Promise<number>;
     QueryID<T>(param: ParamQueryID): Promise<T[]>;
     IDNO(param: ParamIDNO): Promise<string>;
     IDEntity(typeId: number): ID;
@@ -276,6 +282,11 @@ export interface Uq {
     ActDetail<M, D>(param: ParamActDetail<M, D>): Promise<RetActDetail>;
     ActDetail<M, D, D2>(param: ParamActDetail2<M, D, D2>): Promise<RetActDetail2>;
     ActDetail<M, D, D2, D3>(param: ParamActDetail3<M, D, D2, D3>): Promise<RetActDetail3>;
+
+    AdminGetList(): Promise<any[]>;
+    AdminSetMe(): Promise<void>;
+    AdminSet(user: number, role: number, assigned: string): Promise<void>;
+    AdminIsMe(): Promise<boolean>;
 }
 
 export class UqMan {
@@ -295,29 +306,31 @@ export class UqMan {
     private readonly pendings: { [name: string]: Pending } = {};
     private readonly tuidsCache: TuidsCache;
     private readonly localEntities: LocalCache;
+    readonly sys: UqSys;
     readonly localMap: LocalMap;
     readonly localModifyMax: LocalCache;
     readonly tuids: { [name: string]: Tuid } = {};
     readonly newVersion: boolean;
     readonly uqOwner: string;
     readonly uqName: string;
+    readonly uqSchema: any;
     readonly name: string;
     readonly id: number;
     readonly net: Net;
     readonly uqApi: UqApi;
-    //idCache: IDCache;
     proxy: any;
     $proxy: any;
 
     uqVersion: number;
     config: UqConfig;
 
-    constructor(net: Net, uqData: UqData) {
+    constructor(net: Net, uqData: UqData, uqSchema: any) {
         this.net = net;
         let { id, uqOwner, uqName, newVersion } = uqData;
         this.newVersion = newVersion;
         this.uqOwner = uqOwner;
         this.uqName = uqName;
+        this.uqSchema = uqSchema;
         this.id = id;
         this.name = uqOwner + '/' + uqName;
         this.uqVersion = 0;
@@ -327,18 +340,12 @@ export class UqMan {
         this.tuidsCache = new TuidsCache(this);
         let baseUrl = 'tv/';
         this.uqApi = new UqApi(this.net, baseUrl, this.uqOwner, this.uqName);
+        this.sys = new UqSys(this.entities);
     }
 
     getID(name: string): ID { return this.ids[name.toLowerCase()]; };
     getIDX(name: string): IDX { return this.idxs[name.toLowerCase()]; };
     getIX(name: string): IX { return this.ixs[name.toLowerCase()]; };
-
-    /*
-    private createBoxIdFromTVs:CreateBoxId = (tuid:Tuid, id:number):BoxId =>{
-        let {name} = tuid;
-        return new ReactBoxId(id, tuid, this.tvs[name]);
-    }
-    */
 
     private roles: string[];
     async getRoles(): Promise<string[]> {
@@ -380,13 +387,7 @@ export class UqMan {
     readonly mapArr: Map[] = [];
     readonly historyArr: History[] = [];
     readonly pendingArr: Pending[] = [];
-    /*
-        private async initUqApi() {
-            if (!this.uqApi) {
-                await this.uqApi.init();
-            }
-        }
-    */
+
     async loadEntities(): Promise<string> {
         try {
             let entities = this.localEntities.get();
@@ -395,6 +396,7 @@ export class UqMan {
             }
             if (!entities) return;
             this.buildEntities(entities);
+            return undefined;
         }
         catch (err) {
             return err as any;
@@ -603,6 +605,8 @@ export class UqMan {
         type = parts[0];
         let id = Number(parts[1]);
         switch (type) {
+            default:
+                break;
             //case 'uq': this.id = id; break;
             case 'tuid':
                 // Tuid should not be created here!;
@@ -711,7 +715,7 @@ export class UqMan {
                 }
                 let ret = target[lk];
                 if (ret !== undefined) return ret;
-                let func = (this as any)[key];
+                let func: any = (this as any)[key];
                 if (func !== undefined) return func;
                 this.errUndefinedEntity(String(key));
             }
@@ -720,9 +724,9 @@ export class UqMan {
         this.$proxy = new Proxy(this.entities, {
             get: (target, key, receiver) => {
                 let lk = (key as string).toLowerCase();
-                let ret = target[lk];
+                let ret: any = target[lk];
                 if (ret !== undefined) return ret;
-                let func = (this as any)['$' + (key as string)];
+                let func: any = (this as any)['$' + (key as string)];
                 if (func !== undefined) return func;
                 this.errUndefinedEntity(String(key));
             }
@@ -749,39 +753,42 @@ export class UqMan {
         let apiParam: any = {};
         for (let i in param) {
             arr.push(i);
-            apiParam[i] = (param[i] as any[]).map(v => {
-                let obj: any = {};
-                for (let j in v) {
-                    let val = v[j];
-                    if (typeof val === 'object') {
-                        let nv: any = {};
-                        for (let n in val) {
-                            let tv = val[n];
-                            if (tv && typeof tv === 'object') {
-                                if (n === 'time') {
-                                    if (Object.prototype.toString.call(tv) === '[object Date]') {
-                                        tv = (tv as Date).getTime();
-                                    }
-                                }
-                                else {
-                                    let id = tv['id'];
-                                    tv = id;
-                                }
-                            }
-                            nv[n] = tv;
-                        }
-                        obj[j] = nv;
-                    }
-                    else {
-                        obj[j] = val;
-                    }
-                }
-                return obj;
-            });
+            apiParam[i] = (param[i] as any[]).map(v => this.buildValue(v));
         }
         apiParam['$'] = arr;
         let ret = await this.apiPost('acts', resultType, apiParam);
         return ret;
+    }
+
+    private buildValue(v: any) {
+        if (!v) return v;
+        let obj: any = {};
+        for (let j in v) {
+            let val = v[j];
+            if (j === 'ID') {
+                switch (typeof val) {
+                    case 'object': val = val.name; break;
+                }
+            }
+            else if (j === 'time') {
+                if (val) {
+                    if (Object.prototype.toString.call(val) === '[object Date]') {
+                        val = (val as Date).getTime();
+                    }
+                }
+            }
+            else if (typeof val === 'object') {
+                let id = val['id'];
+                if (id === undefined) {
+                    val = this.buildValue(val);
+                }
+                else {
+                    val = id;
+                }
+            }
+            obj[j] = val;
+        }
+        return obj;
     }
 
     protected Acts = async (param: any): Promise<any> => {
@@ -835,7 +842,7 @@ export class UqMan {
             IX: entityName(IX),
             ID: entityName(ID),
             IXs: IXs?.map((v: any) => ({ IX: entityName(v.IX), ix: v.ix })),
-            values,
+            values: values?.map((v: any) => this.buildValue(v)),
         };
         let ret = await this.apiPost('act-ix', resultType, apiParam);
         return ret;
@@ -872,6 +879,29 @@ export class UqMan {
 
     protected ActIDProp = async (ID: ID, id: number, name: string, value: any) => {
         await this.uqApi.post('act-id-prop', { ID: ID.name, id, name, value });
+    }
+
+    protected ActID = async (param: ParamActID): Promise<number> => {
+        let ret = await this.apiActID(param, EnumResultType.data);
+        let r = (ret[0].ret as string).split('\t').map(v => Number(v))[0];
+        if (isNaN(r) === true) return undefined;
+        return r;
+    }
+
+    protected $ActID = async (param: ParamActID): Promise<string> => {
+        let ret = await this.apiActID(param, EnumResultType.sql);
+        return ret;
+    }
+
+    private async apiActID(param: ParamActID, resultType: EnumResultType): Promise<any> {
+        let { ID, value, IX, ix } = param;
+        let apiParam: any = {
+            ID: entityName(ID),
+            value: this.buildValue(value),
+            IX: IX?.map(v => entityName(v)),
+            ix: ix?.map(v => this.buildValue(v)),
+        };
+        return await this.apiPost('act-id', resultType, apiParam);
     }
 
     private async apiActDetail(param: ParamActDetail<any, any>, resultType: EnumResultType): Promise<any> {
@@ -1028,6 +1058,25 @@ export class UqMan {
         });
         return ret;
     }
+
+    private cache: { [id: number]: object } = {};
+    private cachePromise: { [id: number]: Promise<any> } = {};
+    protected idObj = async (id: number) => {
+        let obj = this.cache[id];
+        if (obj === undefined) {
+            let promise = this.cachePromise[id];
+            if (promise === undefined) {
+                promise = this.apiID(({ id, IDX: undefined }), EnumResultType.data);
+                this.cachePromise[id] = promise;
+            }
+            let ret = await promise;
+            obj = ret[0];
+            this.cache[id] = (obj === undefined) ? null : obj;
+            delete this.cachePromise[id];
+        }
+        return obj;
+    }
+
     protected ID = async (param: ParamID): Promise<any[]> => {
         return await this.apiID(param, EnumResultType.data);
     }

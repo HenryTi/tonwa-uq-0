@@ -60,7 +60,7 @@ var Net = /** @class */ (function () {
         this.centerApi = new centerApi_1.CenterApi(this, 'tv/');
         this.uqTokens = new UqTokens_1.UqTokens(this);
         this.userApi = new userApi_1.UserApi(this, 'tv/');
-        this.uqTokenApi = new uqApi_1.UqTokenApi(this, 'tv/tie/');
+        this.uqTokenApi = new uqApi_1.UqTokenApi(this, 'tv/');
         this.callCenterapi = new uqApi_1.CallCenterApi(this, '');
         //this.guestApi = new GuestApi(this, 'tv/guest/');
         this.messageHub = new messageHub_1.MessageHub(this);
@@ -68,7 +68,7 @@ var Net = /** @class */ (function () {
         //this.hostMan = HostMan.createHost(this.isDevelopment);
     }
     Net.prototype.logout = function () {
-        throw new Error('Method not implemented.');
+        // throw new Error('Method not implemented.');
     };
     Net.prototype.init = function () {
         return __awaiter(this, void 0, void 0, function () {

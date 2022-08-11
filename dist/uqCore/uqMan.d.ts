@@ -12,6 +12,7 @@ import { UqEnum } from './enum';
 import { Entity } from './entity';
 import { ID, IX, IDX } from './ID';
 import { Net } from '../net';
+import { UqSys } from './uqSys';
 export declare type FieldType = 'id' | 'tinyint' | 'smallint' | 'int' | 'bigint' | 'dec' | 'float' | 'double' | 'char' | 'text' | 'datetime' | 'date' | 'time' | 'timestamp' | 'enum';
 export declare function fieldDefaultValue(type: FieldType): 0 | "" | "2000-1-1" | "0:00";
 export interface Field {
@@ -62,6 +63,12 @@ export interface ParamActIXSort {
     ix: number;
     id: number;
     after: number;
+}
+export interface ParamActID {
+    ID: ID;
+    value: object;
+    IX?: IX[];
+    ix?: (number | object)[];
 }
 export interface ParamActDetail<M, D> {
     main: {
@@ -205,15 +212,14 @@ export interface ParamIDTree {
 export interface Uq {
     $: Uq;
     $name: string;
-    AdminGetList(): Promise<any[]>;
-    AdminSetMe(): Promise<void>;
-    AdminSet(user: number, role: number, assigned: string): Promise<void>;
-    AdminIsMe(): Promise<boolean>;
+    sys: UqSys;
+    idObj<T = any>(id: number): Promise<T>;
     IDValue(type: string, value: string): object;
     Acts(param: any): Promise<any>;
     ActIX<T>(param: ParamActIX<T>): Promise<number[]>;
     ActIXSort(param: ParamActIXSort): Promise<void>;
     ActIDProp(ID: ID, id: number, name: string, value: any): Promise<void>;
+    ActID(param: ParamActID): Promise<number>;
     QueryID<T>(param: ParamQueryID): Promise<T[]>;
     IDNO(param: ParamIDNO): Promise<string>;
     IDEntity(typeId: number): ID;
@@ -240,6 +246,10 @@ export interface Uq {
     ActDetail<M, D>(param: ParamActDetail<M, D>): Promise<RetActDetail>;
     ActDetail<M, D, D2>(param: ParamActDetail2<M, D, D2>): Promise<RetActDetail2>;
     ActDetail<M, D, D2, D3>(param: ParamActDetail3<M, D, D2, D3>): Promise<RetActDetail3>;
+    AdminGetList(): Promise<any[]>;
+    AdminSetMe(): Promise<void>;
+    AdminSet(user: number, role: number, assigned: string): Promise<void>;
+    AdminIsMe(): Promise<boolean>;
 }
 export declare class UqMan {
     readonly entities: {
@@ -263,6 +273,7 @@ export declare class UqMan {
     private readonly pendings;
     private readonly tuidsCache;
     private readonly localEntities;
+    readonly sys: UqSys;
     readonly localMap: LocalMap;
     readonly localModifyMax: LocalCache;
     readonly tuids: {
@@ -271,6 +282,7 @@ export declare class UqMan {
     readonly newVersion: boolean;
     readonly uqOwner: string;
     readonly uqName: string;
+    readonly uqSchema: any;
     readonly name: string;
     readonly id: number;
     readonly net: Net;
@@ -279,7 +291,7 @@ export declare class UqMan {
     $proxy: any;
     uqVersion: number;
     config: UqConfig;
-    constructor(net: Net, uqData: UqData);
+    constructor(net: Net, uqData: UqData, uqSchema: any);
     getID(name: string): ID;
     getIDX(name: string): IDX;
     getIX(name: string): IX;
@@ -343,6 +355,7 @@ export declare class UqMan {
     private errUndefinedEntity;
     private apiPost;
     private apiActs;
+    private buildValue;
     protected Acts: (param: any) => Promise<any>;
     protected AdminGetList: () => Promise<any[]>;
     protected AdminSetMe: () => Promise<void>;
@@ -357,6 +370,9 @@ export declare class UqMan {
     protected ActIXSort: (param: ParamActIXSort) => Promise<void>;
     protected $ActIXSort: (param: ParamActIXSort) => Promise<string>;
     protected ActIDProp: (ID: ID, id: number, name: string, value: any) => Promise<void>;
+    protected ActID: (param: ParamActID) => Promise<number>;
+    protected $ActID: (param: ParamActID) => Promise<string>;
+    private apiActID;
     private apiActDetail;
     protected ActDetail: (param: ParamActDetail<any, any>) => Promise<any>;
     protected $ActDetail: (param: ParamActDetail<any, any>) => Promise<any>;
@@ -375,6 +391,9 @@ export declare class UqMan {
     protected $IDDetailGet: (param: ParamIDDetailGet) => Promise<any>;
     private IDXToString;
     private apiID;
+    private cache;
+    private cachePromise;
+    protected idObj: (id: number) => Promise<object>;
     protected ID: (param: ParamID) => Promise<any[]>;
     protected $ID: (param: ParamID) => Promise<string>;
     private apiKeyID;

@@ -40,9 +40,10 @@ exports.UQsMan = void 0;
 var uqMan_1 = require("./uqMan");
 var tool_1 = require("../tool");
 var UQsMan = /** @class */ (function () {
-    function UQsMan(net) {
+    function UQsMan(net, uqsSchema) {
         this.uqMans = [];
         this.net = net;
+        this.uqsSchema = uqsSchema;
         this.uqMans = [];
         this.collection = {};
     }
@@ -112,7 +113,7 @@ var UQsMan = /** @class */ (function () {
     };
     UQsMan.prototype.init = function (uqsData) {
         return __awaiter(this, void 0, void 0, function () {
-            var _i, uqsData_1, uqData, uqOwner, ownerAlias, uqName, uqAlias, uqFullName, uqFull, uq, lower;
+            var _i, uqsData_1, uqData, uqOwner, ownerAlias, uqName, uqAlias, uqFullName, uqFull, uq, uqSchema, lower;
             return __generator(this, function (_a) {
                 //let promiseInits: PromiseLike<void>[] = [];
                 for (_i = 0, uqsData_1 = uqsData; _i < uqsData_1.length; _i++) {
@@ -125,7 +126,8 @@ var UQsMan = /** @class */ (function () {
                         uq = uqFull;
                     }
                     else {
-                        uq = new uqMan_1.UqMan(this.net, uqData /*, undefined, this.tvs[uqFullName] || this.tvs[uqName]*/);
+                        uqSchema = this.uqsSchema[uqFullName];
+                        uq = new uqMan_1.UqMan(this.net, uqData, uqSchema);
                         this.collection[uqFullName] = uq;
                         //promiseInits.push(uq.init());
                     }

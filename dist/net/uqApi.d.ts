@@ -3,7 +3,6 @@ import { ApiBase } from './apiBase';
 import { Net } from './Net';
 export declare class UqApi extends ApiBase {
     private inited;
-    private initingPromise;
     uqOwner: string;
     uqName: string;
     uq: string;

@@ -73,10 +73,7 @@ var UqApi = /** @class */ (function (_super) {
                     case 0:
                         if (this.inited === true)
                             return [2 /*return*/];
-                        if (!this.initingPromise) {
-                            this.initingPromise = this.net.uqTokens.buildAppUq(this.uq, this.uqOwner, this.uqName);
-                        }
-                        return [4 /*yield*/, this.initingPromise];
+                        return [4 /*yield*/, this.net.uqTokens.buildAppUq(this.uq, this.uqOwner, this.uqName)];
                     case 1:
                         _a.sent();
                         this.inited = true;
@@ -111,9 +108,9 @@ var UqApi = /** @class */ (function (_super) {
                                     uqToken = this.net.uqTokens.getUqToken(this.uq);
                                     if (!!uqToken) return [3 /*break*/, 2];
                                     //debugger;
+                                    this.inited = false;
                                     return [4 /*yield*/, this.init()];
                                 case 1:
-                                    //debugger;
                                     _a.sent();
                                     uqToken = this.net.uqTokens.getUqToken(this.uq);
                                     _a.label = 2;
@@ -346,7 +343,7 @@ var UqTokenApi = /** @class */ (function (_super) {
                             }
                         }
                         uqParams = Object.assign({}, params);
-                        return [4 /*yield*/, this.get('uq-token', uqParams)];
+                        return [4 /*yield*/, this.get('open/uq-token', uqParams)];
                     case 2:
                         ret = _a.sent();
                         if (ret === undefined) {
@@ -408,7 +405,7 @@ var CenterAppApi = /** @class */ (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.post('tie/pure-uqs', uqs)];
+                    case 0: return [4 /*yield*/, this.post('open/pure-uqs', uqs)];
                     case 1: return [2 /*return*/, _a.sent()];
                 }
             });

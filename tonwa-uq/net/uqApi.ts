@@ -13,7 +13,6 @@ interface UqLocal {
 
 export class UqApi extends ApiBase {
     private inited = false;
-    private initingPromise: Promise<void>;
     uqOwner: string;
     uqName: string;
     uq: string;
@@ -29,10 +28,7 @@ export class UqApi extends ApiBase {
 
     private async init() {
         if (this.inited === true) return;
-        if (!this.initingPromise) {
-            this.initingPromise = this.net.uqTokens.buildAppUq(this.uq, this.uqOwner, this.uqName);
-        }
-        await this.initingPromise;
+        await this.net.uqTokens.buildAppUq(this.uq, this.uqOwner, this.uqName);
         this.inited = true;
     }
 
@@ -52,6 +48,7 @@ export class UqApi extends ApiBase {
             let uqToken = this.net.uqTokens.getUqToken(this.uq); //, this.uqOwner, this.uqName);
             if (!uqToken) {
                 //debugger;
+                this.inited = false;
                 await this.init();
                 uqToken = this.net.uqTokens.getUqToken(this.uq);
             }
@@ -161,7 +158,7 @@ export class UqTokenApi extends CenterApiBase {
             }
             let uqParams: any = Object.assign({}, params);
             //uqParams.testing = this.net.hostMan.testing;
-            let ret = await this.get('uq-token', uqParams);
+            let ret = await this.get('open/uq-token', uqParams);
             if (ret === undefined) {
                 let { unit, uqOwner, uqName } = params;
                 let err = `center get app-uq(unit=${unit}, '${uqOwner}/${uqName}') - not exists or no unit-service`;
@@ -224,7 +221,7 @@ export class CenterAppApi extends CenterApiBase {
         return ret;
     }
     async uqs(uqs: { owner: string; name: string; version: string }[]): Promise<UqData[]> {
-        return await this.post('tie/pure-uqs', uqs);
+        return await this.post('open/pure-uqs', uqs);
     }
     async unitxUq(unit: number): Promise<UqServiceData> {
         return await this.get('tie/unitx-uq', { unit: unit });
