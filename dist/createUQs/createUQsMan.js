@@ -38,14 +38,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createUQsMan = void 0;
 var uqCore_1 = require("../uqCore");
-function createUQsMan(net, appConfig, uqConfigs, uqsSchema) {
+function createUQsMan(net, appVersion, uqConfigs, uqsSchema) {
     return __awaiter(this, void 0, void 0, function () {
-        var version, uqsLoader, initErrors;
+        var uqsLoader, initErrors;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    version = appConfig.version;
-                    uqsLoader = new uqCore_1.UQsLoader(net, version, uqConfigs, uqsSchema);
+                    uqsLoader = new uqCore_1.UQsLoader(net, appVersion, uqConfigs, uqsSchema);
                     return [4 /*yield*/, uqsLoader.build()];
                 case 1:
                     initErrors = _a.sent();
